@@ -204,25 +204,24 @@ public class VaultAutoClient implements ClientModInitializer {
                 .bounds(width / 2 - 75, height / 2 + 30, 150, 20).build());
         }
 
-        void assign(InputConstants.Key key) {
-            openKey.setKey(key);
-            KeyMapping.resetMapping();
-            if (this.minecraft.options != null) this.minecraft.options.save();
-            this.minecraft.gui.setScreen(parent);
-        }
-
         @Override public boolean keyPressed(KeyEvent event) {
             if (event.key() == InputConstants.KEY_ESCAPE) {
                 this.minecraft.gui.setScreen(parent);
                 return true;
             }
-            assign(InputConstants.Type.KEYSYM.getOrCreate(event.key()));
+            openKey.setKey(InputConstants.Type.KEYBOARD.getOrCreate(event.key()));
+            KeyMapping.resetMapping();
+            if (this.minecraft.options != null) this.minecraft.options.save();
+            this.minecraft.gui.setScreen(parent);
             return true;
         }
 
         @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
             if (super.mouseClicked(event, doubleClick)) return true;
-                        assign(InputConstants.Type.KEYBOARD.getOrCreate(event.key()));
+            openKey.setKey(InputConstants.Type.MOUSE.getOrCreate(event.button()));
+            KeyMapping.resetMapping();
+            if (this.minecraft.options != null) this.minecraft.options.save();
+            this.minecraft.gui.setScreen(parent);
             return true;
         }
     }
