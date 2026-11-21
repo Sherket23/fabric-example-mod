@@ -9,10 +9,10 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -169,21 +169,21 @@ public class VaultAutoClient implements ClientModInitializer {
                 b.setMessage(toggleLabel());
             }).bounds(cx - 150, 20, 270, 20).build());
 
-            addRenderableWidget(Button.builder(Component.literal("⚙"), b ->
+            addRenderableWidget(Button.builder(Component.literal("⚙ Клавиша"), b ->
                 this.minecraft.gui.setScreen(new KeySetScreen(this))
-            ).bounds(cx + 122, 20, 28, 20).build());
+            ).bounds(cx - 150, 44, 300, 20).build());
 
             for (int i = 0; i < NAMES.length; i++) {
                 final int idx = i;
                 int x = cx - 150 + (i % 2) * 152;
-                int y = 48 + (i / 2) * 24;
+                int y = 72 + (i / 2) * 24;
                 addRenderableWidget(Button.builder(itemLabel(i), b -> {
                     if (!selected.remove(idx)) selected.add(idx);
                     b.setMessage(itemLabel(idx));
                 }).bounds(x, y, 148, 20).build());
             }
 
-            int closeY = 48 + ((NAMES.length + 1) / 2) * 24 + 4;
+            int closeY = 72 + ((NAMES.length + 1) / 2) * 24 + 4;
             addRenderableWidget(Button.builder(Component.literal("Закрыть"), b -> onClose())
                 .bounds(cx - 150, closeY, 300, 20).build());
         }
@@ -191,7 +191,7 @@ public class VaultAutoClient implements ClientModInitializer {
         @Override public void removed() { menuOpen = false; }
     }
 
-    /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. */
+    /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. Только клавиатура. */
     static class KeySetScreen extends Screen {
         final Screen parent;
         KeySetScreen(Screen parent) {
@@ -202,6 +202,15 @@ public class VaultAutoClient implements ClientModInitializer {
         @Override protected void init() {
             addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> this.minecraft.gui.setScreen(parent))
                 .bounds(width / 2 - 75, height / 2 + 30, 150, 20).build());
+        }
+
+        @Override public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+            this.renderBackground(g, mouseX, mouseY, partialTick);
+            super.render(g, mouseX, mouseY, partialTick);
+            g.drawCenteredString(this.font, Component.literal("Нажмите клавишу для открытия меню"),
+                this.width / 2, this.height / 2 - 30, 0xFFFFFF);
+            g.drawCenteredString(this.font, Component.literal("Esc — отмена"),
+                this.width / 2, this.height / 2 - 10, 0xAAAAAA);
         }
 
         @Override public boolean keyPressed(KeyEvent event) {
@@ -215,14 +224,5 @@ public class VaultAutoClient implements ClientModInitializer {
             this.minecraft.gui.setScreen(parent);
             return true;
         }
-
-        @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-            if (super.mouseClicked(event, doubleClick)) return true;
-            openKey.setKey(InputConstants.Type.MOUSE.getOrCreate(event.button()));
-            KeyMapping.resetMapping();
-            if (this.minecraft.options != null) this.minecraft.options.save();
-            this.minecraft.gui.setScreen(parent);
-            return true;
-        }
     }
-}
+                }
