@@ -63,14 +63,15 @@ public class VaultAutoClient implements ClientModInitializer {
     static volatile boolean menuOpen = false;
     static volatile long lastClick = 0;
     static volatile boolean pending = false;
+    static KeyMapping openKey;
 
     @Override
     public void onInitializeClient() {
-        KeyMapping key = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+        openKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.vaultauto.open", InputConstants.Type.KEYBOARD, InputConstants.KEY_V, KeyMapping.Category.MISC));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-            while (key.consumeClick()) mc.gui.setScreen(new PickScreen());
+            while (openKey.consumeClick()) mc.gui.setScreen(new PickScreen());
         });
 
         Thread t = new Thread(() -> {
@@ -164,7 +165,12 @@ public class VaultAutoClient implements ClientModInitializer {
             addRenderableWidget(Button.builder(toggleLabel(), b -> {
                 enabled = !enabled;
                 b.setMessage(toggleLabel());
-            }).bounds(cx - 150, 20, 300, 20).build());
+            }).bounds(cx - 150, 20, 270, 20).build());
+
+            // шестерёнка — настройка клавиши
+            addRenderableWidget(Button.builder(Component.literal("⚙"), b ->
+                minecraft.setScreen(new KeySetScreen(this))
+            ).bounds(cx + 122, 20, 28, 20).build());
 
             for (int i = 0; i < NAMES.length; i++) {
                 final int idx = i;
@@ -182,5 +188,36 @@ public class VaultAutoClient implements ClientModInitializer {
         }
 
         @Override public void removed() { menuOpen = false; }
+    }
+
+    /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. */
+    static class KeySetScreen extends Screen {
+        final Screen parent;
+        KeySetScreen(Screen parent) {
+            super(Component.literal("Нажмите клавишу..."));
+            this.parent = parent;
+        }
+
+        @Override protected void init() {
+            addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> minecraft.setScreen(parent))
+                .bounds(width / 2 - 75, height / 2 + 30, 150, 20).build());
+        }
+
+        @Override public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+            if (keyCode == InputConstants.KEY_ESCAPE) {
+                minecraft.setScreen(parent);
+                return true;
+            }
+            openKey.setKey(InputConstants.getKey(keyCode, scanCode));
+            KeyMapping.resetMapping();
+            if (minecraft.options != null) minecraft.options.save();
+            minecraft.setScreen(parent);
+            return true;
+        }
+
+        @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            // клик по кнопке "Отмена" всё ещё должен работать
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
     }
 }
