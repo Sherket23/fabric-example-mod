@@ -9,8 +9,8 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.core.BlockPos;
@@ -191,7 +191,7 @@ public class VaultAutoClient implements ClientModInitializer {
         @Override public void removed() { menuOpen = false; }
     }
 
-    /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. Только клавиатура. */
+    /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. Текст через StringWidget, без ручной отрисовки. */
     static class KeySetScreen extends Screen {
         final Screen parent;
         KeySetScreen(Screen parent) {
@@ -200,17 +200,19 @@ public class VaultAutoClient implements ClientModInitializer {
         }
 
         @Override protected void init() {
-            addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> this.minecraft.gui.setScreen(parent))
-                .bounds(width / 2 - 75, height / 2 + 30, 150, 20).build());
-        }
+            int cx = width / 2;
+            int cy = height / 2;
 
-        @Override public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-            this.renderBackground(g, mouseX, mouseY, partialTick);
-            super.render(g, mouseX, mouseY, partialTick);
-            g.drawCenteredString(this.font, Component.literal("Нажмите клавишу для открытия меню"),
-                this.width / 2, this.height / 2 - 30, 0xFFFFFF);
-            g.drawCenteredString(this.font, Component.literal("Esc — отмена"),
-                this.width / 2, this.height / 2 - 10, 0xAAAAAA);
+            addRenderableWidget(new StringWidget(
+                cx - 150, cy - 40, 300, 20,
+                Component.literal("Нажмите клавишу для открытия меню"), this.font));
+
+            addRenderableWidget(new StringWidget(
+                cx - 150, cy - 18, 300, 12,
+                Component.literal("Esc — отмена").withStyle(ChatFormatting.GRAY), this.font));
+
+            addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> this.minecraft.gui.setScreen(parent))
+                .bounds(cx - 75, cy + 30, 150, 20).build());
         }
 
         @Override public boolean keyPressed(KeyEvent event) {
@@ -225,4 +227,4 @@ public class VaultAutoClient implements ClientModInitializer {
             return true;
         }
     }
-                }
+}
