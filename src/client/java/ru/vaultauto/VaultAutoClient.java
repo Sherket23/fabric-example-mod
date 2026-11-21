@@ -222,7 +222,7 @@ public class VaultAutoClient implements ClientModInitializer {
 
         @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
             if (super.mouseClicked(event, doubleClick)) return true;
-            assign(InputConstants.Type.MOUSE.getOrCreate(event.button()));
+                        assign(InputConstants.Type.KEYBOARD.getOrCreate(event.key()));
             return true;
         }
     }
