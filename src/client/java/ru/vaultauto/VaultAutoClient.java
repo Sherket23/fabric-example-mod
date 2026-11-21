@@ -189,7 +189,7 @@ public class VaultAutoClient implements ClientModInitializer {
         @Override public void removed() { menuOpen = false; }
     }
 
-    /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. */
+        /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. */
     static class KeySetScreen extends Screen {
         final Screen parent;
         KeySetScreen(Screen parent) {
@@ -198,7 +198,7 @@ public class VaultAutoClient implements ClientModInitializer {
         }
 
         @Override protected void init() {
-            addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> this.minecraft.setScreen(parent))
+            addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> this.minecraft.gui.setScreen(parent))
                 .bounds(width / 2 - 75, height / 2 + 30, 150, 20).build());
         }
 
@@ -206,15 +206,15 @@ public class VaultAutoClient implements ClientModInitializer {
             openKey.setKey(key);
             KeyMapping.resetMapping();
             if (this.minecraft.options != null) this.minecraft.options.save();
-            this.minecraft.setScreen(parent);
+            this.minecraft.gui.setScreen(parent);
         }
 
         @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
             if (event.key() == InputConstants.KEY_ESCAPE) {
-                this.minecraft.setScreen(parent);
+                this.minecraft.gui.setScreen(parent);
                 return true;
             }
-            assign(InputConstants.getKey(event.key(), event.scancode()));
+            assign(InputConstants.Type.KEYSYM.getOrCreate(event.key()));
             return true;
         }
 
@@ -224,4 +224,3 @@ public class VaultAutoClient implements ClientModInitializer {
             return true;
         }
     }
-}
