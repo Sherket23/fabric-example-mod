@@ -3,7 +3,7 @@ package ru.vaultauto;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -14,7 +14,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.vault.VaultBlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import org.lwjgl.glfw.GLFW;
 
 public class VaultAutoClient implements ClientModInitializer {
     static final Item[] ITEMS = {
@@ -24,22 +23,22 @@ public class VaultAutoClient implements ClientModInitializer {
     };
     static Item target = null;
     static int cooldown = 0;
+    static boolean menuOpen = false;
 
     @Override
     public void onInitializeClient() {
-        KeyMapping key = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-            "key.vaultauto.open", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, KeyMapping.Category.MISC));
+        KeyMapping key = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.vaultauto.open", InputConstants.Type.KEYBOARD, InputConstants.KEY_V, KeyMapping.Category.MISC));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-            while (key.consumeClick()) mc.setScreen(new PickScreen());
+            while (key.consumeClick()) mc.gui.setScreen(new PickScreen());
             if (cooldown > 0) { cooldown--; return; }
-            if (target == null || mc.player == null || mc.level == null || mc.screen != null) return;
+            if (target == null || menuOpen || mc.player == null || mc.level == null) return;
             if (!(mc.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) return;
             if (!(mc.level.getBlockEntity(hit.getBlockPos()) instanceof VaultBlockEntity vault)) return;
 
             if (vault.getSharedData().getDisplayItem().is(target)) {
                 mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
-                mc.player.swing(InteractionHand.MAIN_HAND);
                 cooldown = 40;
             }
         });
@@ -47,15 +46,19 @@ public class VaultAutoClient implements ClientModInitializer {
 
     static class PickScreen extends Screen {
         PickScreen() { super(Component.literal("Vault Auto")); }
+
         @Override protected void init() {
+            menuOpen = true;
             int y = 30;
             addRenderableWidget(Button.builder(Component.literal("Выкл"), b -> { target = null; onClose(); })
                 .bounds(width / 2 - 100, y, 200, 20).build());
             for (Item it : ITEMS) {
                 y += 24;
-                addRenderableWidget(Button.builder(it.getDescription(), b -> { target = it; onClose(); })
+                addRenderableWidget(Button.builder(it.getDefaultInstance().getHoverName(), b -> { target = it; onClose(); })
                     .bounds(width / 2 - 100, y, 200, 20).build());
             }
         }
+
+        @Override public void removed() { menuOpen = false; }
     }
 }
