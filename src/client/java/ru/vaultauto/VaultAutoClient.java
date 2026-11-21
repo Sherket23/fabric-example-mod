@@ -16,6 +16,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -69,8 +70,11 @@ public class VaultAutoClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        KeyMapping.Category category = KeyMapping.Category.register(
+            Identifier.fromNamespaceAndPath("vaultauto", "main"));
+
         openKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-            "key.vaultauto.open", InputConstants.Type.KEYBOARD, InputConstants.KEY_V, KeyMapping.Category.MISC));
+            "key.vaultauto.open", InputConstants.Type.KEYBOARD, InputConstants.KEY_V, category));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             while (openKey.consumeClick()) mc.gui.setScreen(new PickScreen());
@@ -164,26 +168,28 @@ public class VaultAutoClient implements ClientModInitializer {
         @Override protected void init() {
             menuOpen = true;
             int cx = width / 2;
+
             addRenderableWidget(Button.builder(toggleLabel(), b -> {
                 enabled = !enabled;
                 b.setMessage(toggleLabel());
-            }).bounds(cx - 150, 20, 270, 20).build());
+            }).bounds(cx - 150, 20, 266, 24).build());
 
-            addRenderableWidget(Button.builder(Component.literal("⚙ Клавиша"), b ->
-                this.minecraft.gui.setScreen(new KeySetScreen(this))
-            ).bounds(cx - 150, 44, 300, 20).build());
+            addRenderableWidget(Button.builder(
+                Component.literal("⚙").withStyle(ChatFormatting.BOLD),
+                b -> this.minecraft.gui.setScreen(new KeySetScreen(this))
+            ).bounds(cx + 120, 20, 30, 24).build());
 
             for (int i = 0; i < NAMES.length; i++) {
                 final int idx = i;
                 int x = cx - 150 + (i % 2) * 152;
-                int y = 72 + (i / 2) * 24;
+                int y = 52 + (i / 2) * 24;
                 addRenderableWidget(Button.builder(itemLabel(i), b -> {
                     if (!selected.remove(idx)) selected.add(idx);
                     b.setMessage(itemLabel(idx));
                 }).bounds(x, y, 148, 20).build());
             }
 
-            int closeY = 72 + ((NAMES.length + 1) / 2) * 24 + 4;
+            int closeY = 52 + ((NAMES.length + 1) / 2) * 24 + 4;
             addRenderableWidget(Button.builder(Component.literal("Закрыть"), b -> onClose())
                 .bounds(cx - 150, closeY, 300, 20).build());
         }
@@ -191,7 +197,7 @@ public class VaultAutoClient implements ClientModInitializer {
         @Override public void removed() { menuOpen = false; }
     }
 
-    /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. Текст через StringWidget, без ручной отрисовки. */
+    /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. */
     static class KeySetScreen extends Screen {
         final Screen parent;
         KeySetScreen(Screen parent) {
