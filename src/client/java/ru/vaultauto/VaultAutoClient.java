@@ -167,9 +167,8 @@ public class VaultAutoClient implements ClientModInitializer {
                 b.setMessage(toggleLabel());
             }).bounds(cx - 150, 20, 270, 20).build());
 
-            // шестерёнка — настройка клавиши
             addRenderableWidget(Button.builder(Component.literal("⚙"), b ->
-                minecraft.setScreen(new KeySetScreen(this))
+                this.minecraft.setScreen(new KeySetScreen(this))
             ).bounds(cx + 122, 20, 28, 20).build());
 
             for (int i = 0; i < NAMES.length; i++) {
@@ -199,25 +198,30 @@ public class VaultAutoClient implements ClientModInitializer {
         }
 
         @Override protected void init() {
-            addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> minecraft.setScreen(parent))
+            addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> this.minecraft.setScreen(parent))
                 .bounds(width / 2 - 75, height / 2 + 30, 150, 20).build());
         }
 
-        @Override public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-            if (keyCode == InputConstants.KEY_ESCAPE) {
-                minecraft.setScreen(parent);
+        void assign(InputConstants.Key key) {
+            openKey.setKey(key);
+            KeyMapping.resetMapping();
+            if (this.minecraft.options != null) this.minecraft.options.save();
+            this.minecraft.setScreen(parent);
+        }
+
+        @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+            if (event.key() == InputConstants.KEY_ESCAPE) {
+                this.minecraft.setScreen(parent);
                 return true;
             }
-            openKey.setKey(InputConstants.getKey(keyCode, scanCode));
-            KeyMapping.resetMapping();
-            if (minecraft.options != null) minecraft.options.save();
-            minecraft.setScreen(parent);
+            assign(InputConstants.getKey(event.key(), event.scancode()));
             return true;
         }
 
-        @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            // клик по кнопке "Отмена" всё ещё должен работать
-            return super.mouseClicked(mouseX, mouseY, button);
+        @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+            if (super.mouseClicked(event, doubleClick)) return true;
+            assign(InputConstants.Type.MOUSE.getOrCreate(event.button()));
+            return true;
         }
     }
 }
