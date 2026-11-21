@@ -11,11 +11,16 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.VaultBlock;
 import net.minecraft.world.level.block.entity.vault.VaultBlockEntity;
+import net.minecraft.world.level.block.entity.vault.VaultState;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
@@ -39,24 +44,45 @@ public class VaultAutoClient implements ClientModInitializer {
         KeyMapping key = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.vaultauto.open", InputConstants.Type.KEYBOARD, InputConstants.KEY_V, KeyMapping.Category.MISC));
 
-        ClientTickEvents.START_CLIENT_TICK.register(mc -> work(mc));
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             while (key.consumeClick()) mc.gui.setScreen(new PickScreen());
-            if (cooldown > 0) { cooldown--; return; }
             work(mc);
         });
     }
 
-    static void work(Minecraft mc) {
-        if (cooldown > 0) return;
-        if (!enabled || targets.isEmpty() || menuOpen || mc.player == null || mc.level == null) return;
-        if (!(mc.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) return;
-        if (!(mc.level.getBlockEntity(hit.getBlockPos()) instanceof VaultBlockEntity vault)) return;
+    static InteractionHand keyHand(Player p, boolean ominous) {
+        Item need = ominous ? Items.OMINOUS_TRIAL_KEY : Items.TRIAL_KEY;
+        if (p.getMainHandItem().is(need)) return InteractionHand.MAIN_HAND;
+        if (p.getOffhandItem().is(need)) return InteractionHand.OFF_HAND;
+        return null;
+    }
 
-        if (targets.contains(vault.getSharedData().getDisplayItem().getItem())) {
-            mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
-            cooldown = 40;
-        }
+    static void work(Minecraft mc) {
+        if (cooldown > 0) cooldown--;
+        if (!enabled || targets.isEmpty() || menuOpen) return;
+        var player = mc.player;
+        var level = mc.level;
+        if (player == null || level == null || mc.gameMode == null) return;
+        if (!(mc.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) return;
+
+        BlockPos pos = hit.getBlockPos();
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof VaultBlock)) return;
+        // главное исправление: кликаем только по хранилищу, которое ждёт ключ
+        if (state.getValue(VaultBlock.STATE) != VaultState.ACTIVE) return;
+        boolean ominous = state.getValue(VaultBlock.OMINOUS);
+
+        if (!(level.getBlockEntity(pos) instanceof VaultBlockEntity vault)) return;
+        var shared = vault.getSharedData();
+        if (!shared.hasDisplayItem()) return;
+        if (!targets.contains(shared.getDisplayItem().getItem())) return;
+
+        if (cooldown > 0) return;
+        InteractionHand hand = keyHand(player, ominous);
+        if (hand == null) return;
+
+        mc.gameMode.useItemOn(player, hand, hit);
+        cooldown = 10;
     }
 
     static Component toggleLabel() {
