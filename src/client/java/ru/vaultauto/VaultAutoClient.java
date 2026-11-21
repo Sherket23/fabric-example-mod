@@ -11,6 +11,8 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -168,7 +170,7 @@ public class VaultAutoClient implements ClientModInitializer {
             }).bounds(cx - 150, 20, 270, 20).build());
 
             addRenderableWidget(Button.builder(Component.literal("⚙"), b ->
-                this.minecraft.setScreen(new KeySetScreen(this))
+                this.minecraft.gui.setScreen(new KeySetScreen(this))
             ).bounds(cx + 122, 20, 28, 20).build());
 
             for (int i = 0; i < NAMES.length; i++) {
@@ -189,7 +191,7 @@ public class VaultAutoClient implements ClientModInitializer {
         @Override public void removed() { menuOpen = false; }
     }
 
-        /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. */
+    /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. */
     static class KeySetScreen extends Screen {
         final Screen parent;
         KeySetScreen(Screen parent) {
@@ -209,7 +211,7 @@ public class VaultAutoClient implements ClientModInitializer {
             this.minecraft.gui.setScreen(parent);
         }
 
-        @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        @Override public boolean keyPressed(KeyEvent event) {
             if (event.key() == InputConstants.KEY_ESCAPE) {
                 this.minecraft.gui.setScreen(parent);
                 return true;
@@ -218,9 +220,10 @@ public class VaultAutoClient implements ClientModInitializer {
             return true;
         }
 
-        @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
             if (super.mouseClicked(event, doubleClick)) return true;
             assign(InputConstants.Type.MOUSE.getOrCreate(event.button()));
             return true;
         }
     }
+}
