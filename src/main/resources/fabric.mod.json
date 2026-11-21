@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "id": "vaultauto",
-  "version": "1.0.0",
-  "name": "Vault Auto",
-  "environment": "client",
-  "entrypoints": { "client": ["ru.vaultauto.VaultAutoClient"] },
-  "depends": { "fabricloader": ">=0.17.0", "minecraft": "~26.3", "fabric-api": "*" }
-}
