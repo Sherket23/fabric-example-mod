@@ -10,9 +10,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -172,12 +170,7 @@ public class VaultAutoClient implements ClientModInitializer {
             addRenderableWidget(Button.builder(toggleLabel(), b -> {
                 enabled = !enabled;
                 b.setMessage(toggleLabel());
-            }).bounds(cx - 150, 20, 266, 24).build());
-
-            addRenderableWidget(Button.builder(
-                Component.literal("⚙").withStyle(ChatFormatting.BOLD),
-                b -> this.minecraft.gui.setScreen(new KeySetScreen(this))
-            ).bounds(cx + 120, 20, 30, 24).build());
+            }).bounds(cx - 150, 20, 300, 24).build());
 
             for (int i = 0; i < NAMES.length; i++) {
                 final int idx = i;
@@ -195,42 +188,5 @@ public class VaultAutoClient implements ClientModInitializer {
         }
 
         @Override public void removed() { menuOpen = false; }
-    }
-
-    /** Экран "Нажмите клавишу" для назначения клавиши открытия меню. */
-    static class KeySetScreen extends Screen {
-        final Screen parent;
-        KeySetScreen(Screen parent) {
-            super(Component.literal("Нажмите клавишу..."));
-            this.parent = parent;
-        }
-
-        @Override protected void init() {
-            int cx = width / 2;
-            int cy = height / 2;
-
-            addRenderableWidget(new StringWidget(
-                cx - 150, cy - 40, 300, 20,
-                Component.literal("Нажмите клавишу для открытия меню"), this.font));
-
-            addRenderableWidget(new StringWidget(
-                cx - 150, cy - 18, 300, 12,
-                Component.literal("Esc — отмена").withStyle(ChatFormatting.GRAY), this.font));
-
-            addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> this.minecraft.gui.setScreen(parent))
-                .bounds(cx - 75, cy + 30, 150, 20).build());
-        }
-
-        @Override public boolean keyPressed(KeyEvent event) {
-            if (event.key() == InputConstants.KEY_ESCAPE) {
-                this.minecraft.gui.setScreen(parent);
-                return true;
-            }
-            openKey.setKey(InputConstants.Type.KEYBOARD.getOrCreate(event.key()));
-            KeyMapping.resetMapping();
-            if (this.minecraft.options != null) this.minecraft.options.save();
-            this.minecraft.gui.setScreen(parent);
-            return true;
-        }
     }
 }
